@@ -1,91 +1,89 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors',1);
-ini_set('display_startup_errors',1);
-error_reporting(-1);
-echo "<pre>";
-print_r("sdfsdf");
+require_once("odooconnector.class.php");
 
-class OdooConnector { 
-	public $baseUrl;
-	private $sessionId;
-	private $context;
-	
-	public function __construct ( $baseUrl) {
-		$this->baseUrl = $baseUrl;
-	  }	
-    
-	public function login($db,$login,$password){
-		$result = $this->sendRequest('/web/session/authenticate',array("db"=>$db,"login"=>$login,"password"=>$password));
-		if (isset($result["result"]["uid"])){
-			$this->context = $result["result"]["user_context"];
-			$this->sessionId = $result["result"]["session_id"];
+$odoo = new OdooConnector("http://test.triotech.co.nz:8069", "flowers");
+print_r($odoo->print_json(true,$odoo->login("flowers","admin","admin"))); //login to odoo
+try{
+	if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST))
+		$_POST = (array) json_decode(file_get_contents('php://input'), true);
+
+	if ($_SERVER['REQUEST_METHOD'] == 'PUT')
+		$_PUT = (array) json_decode(file_get_contents('php://input'), true);
+
+	if ($_SERVER['REQUEST_METHOD'] == 'DELETE'){
+		$_DELETE = $_REQUEST;	
 		}
-		return $result;
+
+	//login GET username, password
+	if (isset($_GET["server"])){
+		$odoo->print_json(true,$odoo->getServerInfo());
 	}
-	
-	public function isLoggedIn($force){ 
-		if (!$force){
-			return isset($this->sessionId);
-		}
-		$result = $this->getSessionInfo();
-		return isset($result["uid"]);
-	}	
-	
-	public function logout($force) {
-		unset($this->session_id);
-		if ($force){
-			$result = $this->getSessionInfo();
-			if (isset($result["db"])){
-				$this->login($result["db"],"","");
-			}
-		}
-	}
-	
-	public function searchRead($model, $domain, $fields){
-		$this->sendRequest('/web/dataset/search_read', array("session_id"=>$this->sessionId, "model"=>$model,"domain"=>$domain,"fields"=>$fields));
-	}
-
-
-	public function getSessionInfo(){
-		if (!isset($this->sessionId)){
-			return false;
-		}
-		return $this->sendRequest('/web/session/get_session_info?session_id=' .$this->sessionId, array());
-	}	
-	
-	public function getServerInfo(){
-		return $this->sendRequest('/web/webclient/version_info',array());
-	}	
-    
-    private function sendRequest($url,$params) { 
-		$content = json_encode(array("jsonrpc: '2.0'" => '2.0', "method" => "call", "params" => $params));
-
-		$curl = curl_init($this->baseUrl . $url);
-		curl_setopt($curl, CURLOPT_HEADER, false);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_HTTPHEADER,array("Content-type: application/json"));
-		curl_setopt($curl, CURLOPT_POST, true);
-		curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
-		$json_response = curl_exec($curl);
-		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-		if ( $status != 200 ) {
-			die("Error: call to URL $url failed with status $status, response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
-		}
-
-		curl_close($curl);
-		$response = json_decode($json_response, true);
 		
-		return $response;
-    } 
-} 
+	//login GET username, password
+	else if (isset($_GET["login"]) && isset($_GET["username"]) && isset($_GET["password"])){
+		$odoo->print_json(true,$odoo->login($_GET["username"],$_GET["password"]));
+	}
+	//logout GET sessionid
+	else if (isset($_GET["logout"]) && isset($_GET["sessionid"])){
+		$odoo->setSession($_GET["logout"]);
+		$odoo->print_json(true,$odoo->logout(true));
+	}
+	//get user info GET sessionid
+	else if (isset($_GET["user"]) && isset($_GET["sessionid"])){
+		$odoo->setSession($_GET["logout"]);
+		$odoo->print_json(true,$odoo->getSessionInfo());
+	}
 
-$odoo = new OdooConnector("http://test.triotech.co.nz:8069");
+	//records GET/POST/PUT/DELETE model, args, kwargs (optional)
+	//GET
+	else if (isset($_GET["records"]) && isset($_GET["model"]) && isset($_GET["args"]) && isset($_GET["sessionid"])){
+		$odoo->print_json(true,$odoo->call($_GET["model"],"search_read",json_decode($_GET["args"]),json_decode($_GET["kwargs"])));
+	}
+	//POST
+	else if (isset($_POST["records"]) && isset($_POST["model"]) && isset($_POST["args"]) && isset($_POST["sessionid"])){
+		$odoo->print_json(true,$odoo->call($_POST["create"],"create",json_decode($_POST["args"]),json_decode($_POST["kwargs"])));
+	}
+	//PUT
+	else if (isset($_PUT["records"]) && isset($_PUT["model"]) && isset($_PUT["args"]) && isset($_PUT["sessionid"])){
+		$odoo->print_json(true,$odoo->call($_PUT["model"],"write",json_decode($_PUT["args"]),json_decode($_PUT["kwargs"])));
+	}
+	//DELETE
+	else if ( isset($_DELETE["records"]) && isset($_DELETE["model"]) && isset($_DELETE["args"]) && isset($_DELETE["sessionid"])){
+		$odoo->print_json(true,$odoo->call($_DELETE["model"],"unlink",json_decode($_DELETE["args"]),json_decode($_DELETE["kwargs"])));
+	}	
+	else{
+		throw new Exception('No end point found with that request type!');
+	}
+	
 
-print_r($odoo->login("flowers","admin","admin"));
+	//create new customer POST
+	//update customer PUT
+	//delete customer DELETE
+	//add order POST
+	//update order PUT
+	//delete order DELETE
+	//add stock POST
+	//update stock PUT
+	//delete stock DELETE
 
-print_r($odoo->getSessionInfo());
+
+
+
+	
+
+	//print_r($odoo->getSessionInfo()); //get current session info, returns false if no session exists
+
+	//print_r($odoo->call("res.partner","search",array(array(array('is_company', '=', true),array('customer', '=', true))))); //search customers
+				  
+	//print_r($odoo->call('res.partner', 'create',array(array('name'=>"New Partner from api")))); //create new customer	  
+
+}catch(Exception $e){
+	return $odoo->print_json(false,$e);
+}
+
+
+
+
 
   
   ?>
