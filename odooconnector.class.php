@@ -11,7 +11,7 @@ class OdooConnector {
 		$this->db = $db; //safer/easier to pass this as a constructor and hardcode in php
 	  }	
     
-	public function login($db,$login,$password){
+	public function login($login,$password){
 		$result = $this->sendRequest('/web/session/authenticate',array("db"=>$this->db,"login"=>$login,"password"=>$password));
 		if (isset($result["result"]["uid"])){
 			$this->context = $result["result"]["user_context"];
@@ -46,24 +46,53 @@ class OdooConnector {
 		if (!isset($this->sessionId)){
 			throw new Exception("No session set.");
 		}
-		return $this->sendRequest('/web/session/get_session_info?session_id=' .$this->sessionId, array());
+                $sessionData = $this->sendRequest('/web/session/get_session_info?session_id=' .$this->sessionId, array());
+                $this->context = $sessionData["result"]["user_context"];
+		return $sessionData;
 	}	
 	
 	public function setSession($sessionId){
 		$this->sessionId = $sessionId;
+                $this->getSessionInfo();
 	}
 	
 	public function getServerInfo(){
 		return $this->sendRequest('/web/webclient/version_info',array());
 	}	
 	
-	public function call($model,$method,$args,$kwargs = array()){
+	public function call($model, $method, $args, $kwargs = array()){
+
 		if (!isset($kwargs["context"])){
+                    
 			$kwargs["context"] = array();
 			array_merge($kwargs["context"], $this->context);
-			return $this->sendRequest('/web/dataset/call_kw?session_id=' .$this->sessionId, array("model"=>$model,"method"=>$method,"args"=>$args,"kwargs"=>$kwargs));
+                        
 		}
+                
+                if (!$args){
+                    $args = array();
+                }
+				//$kwargs = array("context"=>array("lang" => "en_US", "tz" => "Pacific/Auckland", "uid"=> 1, "params" => array("action" => 173)));
+				
+		return $this->sendRequest('/web/dataset/call_kw?session_id=' .$this->sessionId, array("model"=>$model,"method"=>$method,"args"=>$args,"kwargs"=>$kwargs));
+		
 	}
+	
+	public function getReport($model, $method, $args, $kwargs = array()){
+            
+		if (!isset($kwargs["context"])){
+                    
+			$kwargs["context"] = array();
+			array_merge($kwargs["context"], $this->context);
+                        
+		}
+                
+                if (!$args){
+                    $args = array();
+                }
+		return $this->sendRequest('/web/web_graph/check_xlwt?session_id=' .$this->sessionId, array("model"=>$model,"method"=>$method,"args"=>$args,"kwargs"=>$kwargs));
+		
+	}	
         
         function print_json($result, $data){
                 print_r(json_encode(array("result"=>$result,"data"=>$data)));
