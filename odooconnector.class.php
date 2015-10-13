@@ -193,7 +193,7 @@ class OdooConnector {
 	
 	public function setSession($sessionId){
 		$this->sessionId = $sessionId;
-		$this->getSessionInfo();
+		return $this->getSessionInfo();
 	}
 	
 	public function getServerInfo(){
@@ -209,7 +209,7 @@ class OdooConnector {
 			$args = array();
 		}
 		//$kwargs = array("context"=>array("lang" => "en_US", "tz" => "Pacific/Auckland", "uid"=> 1, "params" => array("action" => 173))); //action attribute is important for edits
-				
+
 		return $this->sendRequest('/web/dataset/call_kw?session_id=' .$this->sessionId, array("model"=>$model,"method"=>$method,"args"=>$args,"kwargs"=>$kwargs));
 		
 	}
@@ -226,7 +226,13 @@ class OdooConnector {
 				
 		return $this->sendRequest('/web/dataset/call_button?session_id=' .$this->sessionId, array("model"=>$model,"method"=>$method,"args"=>$args));
 		
-	}        
+	}  
+        
+	public function callWorkflow($model, $id, $signal){	
+		return $this->sendRequest('/web/dataset/exec_workflow?session_id=' .$this->sessionId, array("model"=>$model,"id"=>$id,"signal"=>$signal));
+		
+	}         
+        
 	
 	public function getReport($model, $method, $args, $kwargs = array()){ //TODO       
 		if (!isset($kwargs["context"])){            
@@ -245,6 +251,7 @@ class OdooConnector {
     
     private function sendRequest($url,$params) { //actually sending stuff to odoo
 		$content = json_encode(array("jsonrpc: '2.0'" => '2.0', "method" => "call", "params" => $params));
+//if ($params["model"] === "sale.advance.payment.inv"){print_r($content);die();}
 		$curl = curl_init($this->baseUrl . $url);
 		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);

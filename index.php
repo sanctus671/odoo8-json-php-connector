@@ -111,7 +111,52 @@ try{
             $odoo->setSession($_POST["sessionid"]);
             $odoo->print_json(true,$odoo->call($_POST["model"],"unlink",array($_POST["args"])));
 	}
-	
+        
+        //CREATE INVOICE
+        else if (isset($_POST["createinvoice"]) && isset($_POST["args"]) && isset($_POST["kwargs"]) && isset($_POST["sessionid"])){
+            $session = $odoo->setSession($_POST["sessionid"]);
+            $kwargs = array("context"=>array_merge($_POST["kwargs"]["context"], $session["result"]["user_context"]));
+            $odoo->print_json(true,$odoo->call("sale.advance.payment.inv","create",$_POST["args"], $kwargs));            
+        }
+        
+        //ASSIGN INVOICE
+        else if (isset($_POST["assigninvoice"]) && isset($_POST["args"]) && isset($_POST["sessionid"])){
+            $odoo->setSession($_POST["sessionid"]);
+            $odoo->print_json(true,$odoo->callAction("sale.advance.payment.inv","create_invoices",$_POST["args"]));            
+        }  
+        
+        //SEND INVOICE
+        else if (isset($_POST["sendinvoice"]) && isset($_POST["id"]) && $_POST["kwargs"] && isset($_POST["sessionid"])){
+            $session = $odoo->setSession($_POST["sessionid"]);
+            $kwargs = array("context"=>array_merge($_POST["kwargs"]["context"], $session["result"]["user_context"]));
+            //2 parts: validate invoice -> send email
+            $odoo->callWorkflow("account.invoice",$_POST["id"],"invoice_open");
+            
+            //$odoo->print_json(true,$odoo->callWorkflow("sale.advance.payment.inv","create_invoices",$_POST["args"]));   
+
+            //create invoice template
+            $messageKwargs = array("active_model"=>"account.invoice", "default_composition_mode"=> "comment", "default_model"=> "account.invoice", "default_res_id"=> $_POST["id"], "default_template_id"=> 9, "default_use_template"=> true, "mark_invoice_as_sent"=> true, "type"=> "out_invoice");
+            
+            $messageKwargsMerge = array_merge($kwargs["context"], $messageKwargs);
+            $kwargs["context"] = $messageKwargsMerge;
+            $messageData = $odoo->call("mail.compose.message","default_get",array(array("no_auto_thread","mail_server_id","notify","subject","composition_mode","attachment_ids","is_log","parent_id","partner_ids","res_id","body","model","use_active_domain","email_from","reply_to","template_id")),$kwargs);
+
+            $invoiceArgs = $messageData["result"];
+            
+            $emailData = $odoo->call("mail.compose.message", "create", array($invoiceArgs), $kwargs);
+            $emailArgs = $emailData["result"];
+        
+            $odoo->print_json($odoo->callAction("mail.compose.message", "send_mail", array(array($emailArgs, $kwargs["params"] ))));
+            
+            
+            
+            
+        } 
+        
+
+        
+        
+        
 	//UPLOAD FILE
 	else if (isset($_POST["upload"])){
 		$target_dir = "uploads/";
