@@ -167,18 +167,10 @@ class OdooConnector {
                 $newPassword = md5($user["username"] . time());
                 $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT); //hash password
                 $this->localDb->update("users", array("password"=>$newPasswordHash), array("id"=>$user["id"])); //update it                
-
-                $subject = "Password Reset - Manawatu Flowers Portal";
-                $email_address = "info@manawatuflowers.com";
-                $message = "You're new password is: " . $newPassword;
-
-                $headers = 'From: ' . $email_address . "\r\n" .
-                   'Reply-To: ' . $email_address . "\r\n" .
-                   'X-Mailer: PHP/' . phpversion();
-
-
-                mail($email, $name, $message, $headers);                
-                return $newPassword;
+                
+                $this->sendEmail($partner["result"][0]["email"], 'Password Reset - Manawatu Flowers Portal', "You're new password is: " . $newPassword);             
+                
+                return true;
                 
         }
 
@@ -231,7 +223,38 @@ class OdooConnector {
 	public function callWorkflow($model, $id, $signal){	
 		return $this->sendRequest('/web/dataset/exec_workflow?session_id=' .$this->sessionId, array("model"=>$model,"id"=>$id,"signal"=>$signal));
 		
-	}         
+	}  
+        
+        public function sendResults($collated, $notSold, $partners){
+            require('libraries/fpdf/fpdf.php');
+            require('libraries/fpdf/fpdf-ex.php');          
+            
+            $pdf = new PDF();
+            $pdf->AliasNbPages();
+            $pdf->AddPage();
+            $pdf->SetFont('Times','B',12);
+            $pdf->Cell(0,10,'Auctions',0,1);
+            $pdf->SetFont('Times','',12);
+            foreach($collated as $key=>$auctions){
+                $pdf->SetFont('Times','B',12);
+                $pdf->Cell(0,10,'Product:' . $key,0,1);
+                $pdf->SetFont('Times','',12);
+                foreach($auctions as $auction){
+                    $pdf->Cell(0,10, $auction["quantity"] . " bought by " . $auction["buyerName"] . " (user ID: " . $auction["buyer"] . ") for $" . $auction["price"] . " (order ID: " . $auction["orderid"] . ")",0,1);
+                }
+            }
+            $pdf->SetFont('Times','B',12);
+            $pdf->Cell(0,10,'Remaining Stock',0,1);
+            $pdf->SetFont('Times','',12);
+            foreach($notSold as $key=>$remaining){
+                $pdf->Cell(0,10,$key . " (product ID: " . $remaining["productid"] . "): " . $remaining["quantity"] . " unsold." ,0,1);
+            }            
+            $doc = $pdf->Output('', 'S');
+            
+            $this->sendEmail($partners, 'Auction Summary ' . date("d-m-Y"), "Attached in the summary from the Manawatu Flowers auction for the date " . date("d-m-Y"), $doc);
+
+            return true;
+        }
         
 	
 	public function getReport($model, $method, $args, $kwargs = array()){ //TODO       
@@ -243,15 +266,52 @@ class OdooConnector {
 			$args = array();
 		}
 		return $this->sendRequest('/web/web_graph/check_xlwt?session_id=' .$this->sessionId, array("model"=>$model,"method"=>$method,"args"=>$args,"kwargs"=>$kwargs));	
-	}	
+	}
+        
+        
         
 	public function print_json($result, $data){ //for returning json to client
 			print_r(json_encode(array("result"=>$result,"data"=>$data)));
-	}        
+	}    
+        
+        private function sendEmail($to, $subject, $body, $attachment=null){
+            require('libraries/PHPMailer/PHPMailerAutoload.php');
+            $mail = new PHPMailer;
+            $mail->IsSMTP();                           // telling the class to use SMTP
+            $mail->SMTPAuth   = true;                  // enable SMTP authentication
+            $mail->Host       = "smtpout.secureserver.net"; // set the SMTP server
+            $mail->Port       = 25;                    // set the SMTP port
+            $mail->Username   = "taylor@taylorhamling.com"; // SMTP account username
+            $mail->Password   = "";        // SMTP account password
+            $mail->From = "taylor@triotech.co.nz";
+            $mail->FromName = "Manawatu Flowers";
+            
+            if (is_array($to)){
+                foreach ($to as $partner){
+                    $mail->addAddress($partner);
+                }
+            }
+            else{
+                $mail->addAddress($to);
+            }
+            
+            if (!is_null($attachment)){
+                $mail->AddStringAttachment($attachment, 'auction-summary_' . date("d-m-Y") . '.pdf', 'base64', 'application/pdf');  
+            }
+
+
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+
+            if(!$mail->send()) 
+            {
+                throw new Exception("Mailer Error: " . $mail->ErrorInfo);
+            } 
+            return true;
+        }
     
-    private function sendRequest($url,$params) { //actually sending stuff to odoo
+        private function sendRequest($url,$params) { //actually sending stuff to odoo
 		$content = json_encode(array("jsonrpc: '2.0'" => '2.0', "method" => "call", "params" => $params));
-//if ($params["model"] === "sale.advance.payment.inv"){print_r($content);die();}
 		$curl = curl_init($this->baseUrl . $url);
 		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);

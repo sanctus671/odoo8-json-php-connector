@@ -1,0 +1,63 @@
+<md-data-table-toolbar aria-hidden="false" class="">
+  <h2 class="md-title">Account</h2>
+  <div flex=""></div>
+</md-data-table-toolbar>
+
+<md-content flex="100" flex-gt-md="40" flex-gt-lg="25" layout-align="center center" layout-padding>
+        <form name="accountForm">
+            <md-input-container class="md-icon-float" >
+                <label>Username</label>
+                <md-icon md-svg-icon="css/icons/ic_person_black_24px.svg"></md-icon>
+                <input md-maxlength="30" minlength="6" name="username" required ng-model="user.username" type="text" disabled>
+                <div ng-messages="registerForm.username.$error">
+                  <div ng-message="md-maxlength">Must be less than 30 characters.</div>
+                  <div ng-message="minlength">Must be more than 6 characters.</div>
+                </div>            
+            </md-input-container>                    
+            <md-input-container class="md-icon-float" >
+                <label>Current Password (Enter if you want to change your current password)</label>
+                <md-icon md-svg-icon="css/icons/ic_lock_black_24px.svg"></md-icon>
+                <input md-maxlength="100" minlength="6" name="currentpassword" ng-model="user.currentPassword" type="password">
+                <div ng-messages="registerForm.currentpassword.$error">
+                  <div ng-message="md-maxlength">Must be less than 30 characters.</div>
+                  <div ng-message="minlength">Must be more than 6 characters.</div>
+                </div>                    
+            </md-input-container>            
+            <md-input-container class="md-icon-float" >                
+                <label>New Password</label>
+                <md-icon md-svg-icon="css/icons/ic_lock_black_24px.svg"></md-icon>
+                <input md-maxlength="100" minlength="6" name="password" ng-model="user.password" type="password">
+                <div ng-messages="registerForm.password.$error">
+                  <div ng-message="md-maxlength">Must be less than 30 characters.</div>
+                  <div ng-message="minlength">Must be more than 6 characters.</div>
+                </div>                    
+            </md-input-container>
+            <md-input-container class="md-icon-float" >
+                <label>Confirm New Password</label>
+                <md-icon md-svg-icon="css/icons/ic_lock_black_24px.svg"></md-icon>
+                <input name="confirmPassword" ng-model="user.passwordconfirm" type="password">            
+            </md-input-container>
+            
+            <md-radio-group ng-model="user.type" class="md-primary">
+                <label>I am a:</label>
+                <md-radio-button value="buyer">Buyer</md-radio-button>
+                <md-radio-button value="grower">Grower</md-radio-button>
+                <md-radio-button value="picker">Picker</md-radio-button>
+            </md-radio-group>     
+            
+            
+            <md-input-container class="md-icon-float" >
+                <label>Email</label>
+                <md-icon md-svg-icon="css/icons/ic_email_black_24px.svg"></md-icon>
+                <input ng-model="partner.email" type="text">
+            </md-input-container>   
+
+            <md-input-container class="md-icon-float" >
+                <label>Business</label>
+                <md-icon md-svg-icon="css/icons/ic_business_black_24px.svg"></md-icon>
+                <input ng-model="partner.business" type="text">
+            </md-input-container>    
+            <md-button class="md-raised md-accent" ng-click="updateUser()">Update</md-button>
+            
+        </form>
+  </md-content>

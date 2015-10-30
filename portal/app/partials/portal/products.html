@@ -1,0 +1,57 @@
+<md-data-table-toolbar ng-hide="selected.length || filter.show" aria-hidden="false" class="">
+  <h2 class="md-title">Products</h2>
+  <div flex=""></div>
+    <md-button class="md-fab md-primary md-mini" ng-click="filter.show = true">
+        <md-icon md-svg-icon="css/icons/ic_filter_list_white_24px.svg"></md-icon> 
+        <md-tooltip>
+            Filter products
+        </md-tooltip>          
+    </md-button>
+</md-data-table-toolbar>
+
+<md-data-table-toolbar ng-show="filter.show && !selected.length">
+  <form flex="" name="filter.form">
+      <md-input-container md-no-float class="filter-input">
+          <input type="text" ng-model="query.search" placeholder="search">
+      </md-input-container>
+  </form>
+    <md-button ng-click="filter.show = false">
+        <md-icon md-svg-icon="css/icons/ic_close_black_24px.svg"></md-icon>
+    </md-button>
+</md-data-table-toolbar>
+
+        <md-data-table-toolbar class="alternate" ng-show="selected.length">
+            <div>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</div>
+            <div flex=""></div>         
+        </md-data-table-toolbar>
+
+        <md-data-table-container>
+          <table md-data-table class="md-primary" md-row-select="selected" md-progress="deferred">
+            <thead md-order="query.order" md-trigger="onOrderChange">
+              <tr>
+                <th order-by="id" name="ID"></th>
+                <th order-by="name" name="Name"></th>
+                <th order-by="image_small" name="Image"></th>
+                <th order-by="qty_available" name="Quantity Available"></th>
+                <th order-by="incoming_qty" name="Quantity Forecasted"></th>
+                <th order-by="outgoing_qty" name="Quantity Outgoing"></th>
+                <th order-by="virtual_available" name="Total Quantity"></th>
+
+              </tr>
+            </thead>
+            <tbody>
+              <tr md-auto-select ng-repeat="product in products.data  | filter:query.search ">
+                <td>{{product.id | no_false}}</td>
+                <td>{{product.name | no_false}}</td>
+                <td><img class="stock-thumbnail" ng-if="product.image_small" ng-src="data:image/jpg;base64,{{product.image_small | no_false}}"></td>
+                <td>{{product.qty_available | no_false}}</td>
+                <td>{{product.incoming_qty | no_false}}</td>
+                <td>{{product.outgoing_qty | no_false}}</td>
+                <td>{{product.virtual_available | no_false}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </md-data-table-container>
+        <md-data-table-pagination md-limit="query.limit" md-page="query.page" md-total="{{products.count}}" md-trigger="onPageChange"></md-data-table-pagination>
+        
+        

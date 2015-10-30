@@ -1,0 +1,76 @@
+<div layout="row" class="side-nav">
+    <section layout="row">
+    <md-sidenav class="md-sidenav-left md-whiteframe-z2" md-component-id="left" md-is-locked-open="$mdMedia('gt-md')">
+        <md-toolbar class="">
+            <div class="md-toolbar-tools">
+            <md-button class="md-icon-button" aria-label="Toggle menu" ng-click="toggleNav()" hide-gt-md>
+                <md-icon md-svg-icon="css/icons/ic_close_white_24px.svg"></md-icon>         
+            </md-button>
+            <h2>
+              <span>Menu</span>
+            </h2>
+        
+            </div>          
+        </md-toolbar>
+        <md-content class="menu-list">
+            <md-list>
+                <md-list-item>
+                    <md-button ui-sref="portal.home">Home</md-button>
+                </md-list-item>
+                <md-divider></md-divider>                
+                <md-list-item>
+                    <md-button ui-sref="portal.stock">Stock</md-button>
+                </md-list-item>
+                <md-divider></md-divider>  
+                <md-list-item>
+                    <md-button ui-sref="portal.products">Products</md-button>
+                </md-list-item>                
+                <md-divider></md-divider>
+                <md-list-item>
+                    <md-button ui-sref="portal.orders">Orders</md-button>
+                </md-list-item>
+            </md-list>            
+      </md-content>
+    </md-sidenav>
+
+ </section>
+    
+<div layout="column" flex>
+    <md-toolbar class="md-accent md-whiteframe-z1 ">
+        <h2 class="md-toolbar-tools">
+                <md-button class="md-icon-button" aria-label="Toggle menu" ng-click="toggleNav()" hide-gt-md>
+                    <md-icon md-svg-icon="css/icons/ic_menu_white_24px.svg"></md-icon>                   
+                </md-button>        
+            <span flex="">Manawatu Flowers Portal</span>
+            <md-menu-bar>
+                <md-menu>
+
+                    <md-button class="md-icon-button" aria-label="User" ng-click="$mdOpenMenu()">
+                        <md-icon md-svg-icon="css/icons/ic_person_white_24px.svg"></md-icon> <md-icon md-svg-icon="css/icons/ic_arrow_drop_down_white_24px.svg"></md-icon>          
+                    </md-button>
+
+                    <md-menu-content class="account-dropdown">
+                        <md-menu-item>
+                            <md-button ng-click="$mdCloseMenu()" ui-sref="portal.account">My Account</md-button>
+                        </md-menu-item>
+                        <md-menu-divider></md-menu-divider>
+                        <md-menu-item>
+                            <md-button ng-click="$mdCloseMenu();logout()">Logout</md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu> 
+            </md-menu-bar>
+        </h2>
+    </md-toolbar>  
+
+<div ui-view></div>
+
+</div>    
+    
+</div>  
+
+
+
+
+
+  

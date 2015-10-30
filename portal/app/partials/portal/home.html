@@ -1,0 +1,76 @@
+<div class="homeGrid">
+    <md-grid-list md-cols-sm="1" md-cols-md="2" md-cols-gt-md="6" md-row-height-gt-md="1:1" md-row-height="2:2" md-gutter="12px" md-gutter-gt-sm="8px">
+
+        <md-grid-tile class="gray" md-rowspan="3" md-colspan="2" md-colspan-sm="1">
+            <md-list class="latest-items" ng-repeat="item in latest" style="top:{{$index*72}}px">
+                <a href ui-sref="portal.{{itemType | lowercase}}">
+                    <md-list-item class="md-2-line">
+                      <div class="md-list-item-text">
+                        <h3>{{ item.name}}</h3>
+                        <p>{{convertDate(item.create_date) | date:'medium'}}</p>
+                      </div>
+                    </md-list-item>
+                </a>
+                <md-divider><md-divider>    
+             </md-list>            
+          <md-grid-tile-footer>             
+            <h3>Latest {{itemType}}</h3>
+          </md-grid-tile-footer>
+        </md-grid-tile>
+        
+        
+        
+        
+
+        <md-grid-tile class="green products">
+            <a ui-sref="portal.products">
+                <img ng-if="products[4].image" ng-src="data:image/jpg;base64,{{products[4].image}}"/>
+                <h1>{{products[4].virtual_available}}</h1>      
+                <md-grid-tile-footer>
+                  <h3>{{products[4].name}}</h3>
+                </md-grid-tile-footer>
+            </a>
+        </md-grid-tile>
+
+        <md-grid-tile class="yellow products">
+            <a ui-sref="portal.products">
+                <img ng-if="products[3].image" ng-src="data:image/jpg;base64,{{products[3].image}}"/>
+                <h1>{{products[3].virtual_available}}</h1>      
+                <md-grid-tile-footer>
+                  <h3>{{products[3].name}}</h3>
+                </md-grid-tile-footer>
+            </a>
+        </md-grid-tile>
+
+        <md-grid-tile class="blue products" md-rowspan="3" md-colspan-sm="1">
+            <a ui-sref="portal.products">
+                <img ng-if="products[2].image" ng-src="data:image/jpg;base64,{{products[2].image}}"/>
+                <h1>{{products[2].virtual_available}}</h1>      
+                <md-grid-tile-footer>
+                  <h3>{{products[2].name}}</h3>
+                </md-grid-tile-footer>
+            </a>
+        </md-grid-tile>
+
+        <md-grid-tile class="red products" md-rowspan="2" md-colspan="2" md-colspan-sm="1">
+            <a ui-sref="portal.products">
+                <img ng-if="products[1].image" ng-src="data:image/jpg;base64,{{products[1].image}}"/>
+                <h1>{{products[1].virtual_available}}</h1>                
+                <md-grid-tile-footer>
+                  <h3>{{products[1].name}}</h3>
+                </md-grid-tile-footer>
+            </a>
+        </md-grid-tile>
+
+        <md-grid-tile class="green products force-top" md-rowspan="3" md-colspan-sm="1">
+            <a ui-sref="portal.products">
+                <img ng-if="products[0].image" ng-src="data:image/jpg;base64,{{products[0].image}}"/>
+                <h1>{{products[0].virtual_available}}</h1>
+                <md-grid-tile-footer>
+                  <h3>{{products[0].name}}</h3>
+                </md-grid-tile-footer>
+            </a>
+        </md-grid-tile>
+
+    </md-grid-list>
+</div>

@@ -1,0 +1,67 @@
+<md-dialog aria-label="Add Order">
+  <form>
+  <md-toolbar>
+    <div class="md-toolbar-tools">
+      
+        <h2>Add Order</h2>
+        <md-progress-circular class="md-accent" md-mode="{{uploading}}" md-diameter="20px"></md-progress-circular>
+      
+      <span flex></span>
+      <md-button class="md-icon-button" ng-click="cancel()">
+        <md-icon md-svg-src="css/icons/ic_close_white_24px.svg" aria-label="Close dialog"></md-icon>
+      </md-button>
+    </div>
+  </md-toolbar>
+  <md-dialog-content style="max-width:800px;max-height:810px; " class="add-order">
+    <form name="orderForm" id="order-form">
+        
+        <md-input-container flex>
+          <md-datepicker ng-model="newOrder.date_order" md-placeholder="Order Date"></md-datepicker>
+        </md-input-container>        
+        <div layout layout-sm="column" ng-repeat="line in newOrder.lineItems">
+            <md-input-container class="autocomplete-container" flex style="width:70%">
+                <autocomplete ng-model="line.name" data="products" name="breed" autocomplete-required="true" attr-input-class="md-input" attr-placeholder="Find Breed..."></autocomplete>
+                <div ng-messages="orderForm.breed.$error">
+                    <div ng-message="required">This is required.</div>
+                </div>
+            </md-input-container>   
+            <md-input-container style="width:20%; padding-left: 40px; padding-right: 20px;">
+                <label>Quantity</label>
+                <input type="number" name="quantity" required ng-model="line.product_uom_qty">
+                <div ng-messages="orderForm.quantity.$error">
+                    <div ng-message="required">This is required.</div>
+                </div>              
+            </md-input-container>            
+            <md-button class="md-fab md-mini" aria-label="Remove" ng-click="removeLineItem($index, newOrder.lineItems)">
+                 <md-icon md-svg-icon="css/icons/ic_close_white_24px.svg"></md-icon>
+                 <md-tooltip>
+                     Remove line item
+                 </md-tooltip> 
+             </md-button>
+        </div>
+        <md-input-container flex>
+            <md-button class="md-fab md-primary" aria-label="Add" style="left: 40%;" ng-click="addLineItem(newOrder.lineItems)">
+                <md-icon md-svg-icon="css/icons/ic_add_white_24px.svg"></md-icon>
+                <md-tooltip>
+                    Add line item
+                </md-tooltip> 
+            </md-button>
+        </md-input-container>
+    
+      <md-input-container flex>
+        <label>Notes</label>
+        <textarea ng-model="newOrder.note" columns="1" md-maxlength="150"></textarea>
+      </md-input-container>
+    </form>
+  </md-dialog-content>
+  <div class="md-actions" layout="row">
+    <span flex></span>
+    <md-button ng-click="cancel()" >
+        Cancel
+    </md-button>
+    <md-button class="md-primary" ng-click="create()" style="margin-right:20px;" >
+        Create
+    </md-button>
+  </div>
+  </form>
+</md-dialog>

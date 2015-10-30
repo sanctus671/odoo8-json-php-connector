@@ -71,6 +71,9 @@ try{
                     if (count($item["partner_id"]) > 0){
                         $data["result"][$key]["user_data"] = $odoo->getLocalUser($item["partner_id"][0]);
                     }
+                    else if ($_GET["model"] === "res.partner"){
+                        $data["result"][$key]["user_data"] = $odoo->getLocalUser($item["id"]);
+                    }
                 }
 		$odoo->print_json(true,array("count"=>$count["result"],"data"=>$data["result"]));
 	}
@@ -111,6 +114,13 @@ try{
             $odoo->setSession($_POST["sessionid"]);
             $odoo->print_json(true,$odoo->call($_POST["model"],"unlink",array($_POST["args"])));
 	}
+        
+        //SEND RESULTS
+        else if (isset($_POST["auction"]) && isset($_POST["results"]) && isset($_POST["args"]) && isset($_POST["sessionid"])){
+            $session = $odoo->setSession($_POST["sessionid"]);
+            $odoo->print_json(true,$odoo->sendResults($_POST["args"]["collated"], $_POST["args"]["notSold"], $_POST["args"]["partners"]));            
+        }        
+        
         
         //CREATE INVOICE
         else if (isset($_POST["createinvoice"]) && isset($_POST["args"]) && isset($_POST["kwargs"]) && isset($_POST["sessionid"])){
