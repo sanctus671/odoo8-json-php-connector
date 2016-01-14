@@ -27,12 +27,12 @@ class OdooConnector {
 		$this->setSession($sessionid);
 		if ($data["type"] === "grower" || $data["type"] === "picker"){ //if user type is grower or picker, set as supplier in odoo
 			$result = $this->call("res.partner","create",array(array("name"=>$data["username"], "supplier"=>true, "email"=>$data["email"])));
-		}
+		}              
 		else{$result = $this->call("res.partner","create",array(array("name"=>$data["username"], "customer"=>true, "email"=>$data["email"])));} //otherwise set at customer
 		$partnerid = $result["result"];
 		$password = password_hash($data["password"], PASSWORD_DEFAULT);
 	   
-		$localid = $this->localDb->insert("users", array("username"=>$data["username"], "password"=>$password, "partnerid"=>$partnerid, "type"=>$data["type"])); //insert into local database
+		$localid = $this->localDb->insert("users", array("username"=>$data["username"], "password"=>$password, "partnerid"=>$partnerid, "type"=>$data["type"], "productid"=>$data["productid"])); //insert into local database
 		return array("user"=>array("username"=>$data["username"], "partnerid"=>$partnerid, "session_id"=>$sessionid, "local_userid"=>$localid, "type"=>$data["type"]), "partner"=>array("id"=>$partnerid));
 	}  
 	
@@ -64,7 +64,12 @@ class OdooConnector {
 			}
 
 		}
-		
+
+		if (isset($data["productid"])){ //user default flower type change
+			$this->localDb->update("users", array("productid"=>$data["productid"]), array("id"=>$data["userid"])); //change locally
+
+		}                
+                
 		if (isset($data["email"])){ //email + other field changes - only on odoo
 			$this->call("res.partner","write",array(array((int) $data["partnerid"]),array('email'=>$data['email'])),array("context"=>array("params"=>array("action"=>61), "uid"=>1)));
 		}
@@ -73,7 +78,7 @@ class OdooConnector {
 	}  
         
         public function getLocalUser($id){
-            $result = $this->localDb->select("users", ["username", "id","partnerid"], ["partnerid"=>$id]); 
+            $result = $this->localDb->select("users", ["username", "id","partnerid", "productid"], ["partnerid"=>$id]); 
             if (count($result) < 1){ //make sure this user actually exists 
                     return array();
             }
@@ -103,7 +108,7 @@ class OdooConnector {
 		
 		$partner = $this->call("res.partner","search_read",array(array(array("id", "=", $user["partnerid"])))); //get odoo data for user
 		
-		return array("user"=>array("session_id"=>$sessionid,"username"=>$username, "local_userid"=>$user["id"], "partnerid"=>$user["partnerid"], "type"=>$user["type"]), "partner"=>$partner["result"][0]);
+		return array("user"=>array("session_id"=>$sessionid,"username"=>$username, "local_userid"=>$user["id"], "partnerid"=>$user["partnerid"], "productid"=>$user["productid"], "type"=>$user["type"]), "partner"=>$partner["result"][0]);
 
 		
 		
@@ -190,6 +195,16 @@ class OdooConnector {
 	
 	public function getServerInfo(){
 		return $this->sendRequest('/web/webclient/version_info',array());
+	}	
+	
+	public function getSpecials(){
+		$result = $this->localDb->select("specials", "*"); 
+		return $result;   
+	}
+
+	public function updateSpecial($id,$productid, $colour){
+		$this->localDb->update("specials", array("productid"=>$productid, "colour"=>$colour), array("id"=>$id)); //change locally
+		return true;
 	}	
 	
 	public function call($model, $method, $args, $kwargs = array()){
@@ -282,7 +297,7 @@ class OdooConnector {
             $mail->Host       = "smtpout.secureserver.net"; // set the SMTP server
             $mail->Port       = 25;                    // set the SMTP port
             $mail->Username   = "taylor@taylorhamling.com"; // SMTP account username
-            $mail->Password   = "";        // SMTP account password
+            $mail->Password   = "msnmail1337";        // SMTP account password
             $mail->From = "taylor@triotech.co.nz";
             $mail->FromName = "Manawatu Flowers";
             
@@ -311,6 +326,7 @@ class OdooConnector {
         }
     
         private function sendRequest($url,$params) { //actually sending stuff to odoo
+            
 		$content = json_encode(array("jsonrpc: '2.0'" => '2.0', "method" => "call", "params" => $params));
 		$curl = curl_init($this->baseUrl . $url);
 		curl_setopt($curl, CURLOPT_HEADER, false);

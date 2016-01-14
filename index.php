@@ -2,8 +2,9 @@
 
 require_once("odooconnector.class.php");
 $odoo = new OdooConnector("http://test.triotech.co.nz:8069", "flowers");
-
+//$odoo->print_json(true,$_POST);
 try{
+    
 	if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST))
 		$_POST = (array) json_decode(file_get_contents('php://input'), true);
 
@@ -48,7 +49,18 @@ try{
 		$odoo->setSession($_GET["sessionid"]);
 		$odoo->print_json(true,$odoo->getSessionInfo());
 	}
-
+	
+	//get specials
+	else if (isset($_GET["specials"]) && isset($_GET["sessionid"])){
+		$odoo->setSession($_GET["sessionid"]);
+		$odoo->print_json(true,$odoo->getSpecials());
+	}	
+	//update specials
+	else if (isset($_POST["updatespecial"]) && isset($_POST["sessionid"])){
+		$odoo->setSession($_POST["sessionid"]);
+		$odoo->print_json(true,$odoo->updateSpecial($_POST["id"], $_POST["productid"], $_POST["colour"]));
+	}	
+	
 	//records GET/POST/PUT/DELETE model, args, kwargs (optional)
 	//GET
 	else if (isset($_GET["records"]) && isset($_GET["model"]) && isset($_GET["sessionid"])){
@@ -77,6 +89,32 @@ try{
                 }
 		$odoo->print_json(true,array("count"=>$count["result"],"data"=>$data["result"]));
 	}
+        //GET WITH SEARCH
+	else if (isset($_POST["records"]) && isset($_POST["search"]) && isset($_POST["searchdata"]) && isset($_POST["model"]) && isset($_POST["args"]) && isset($_POST["sessionid"])){
+		$odoo->setSession($_POST["sessionid"]);
+		$offset = 0;$limit = 5;$order = "id DESC";
+		if (isset($_POST["offset"])){$offset = (int) $_POST["offset"];}
+		if (isset($_POST["limit"])){$limit = (int) $_POST["limit"];}     
+                if (isset($_POST["order"])){$order = $_POST["order"];}
+		$search = $_POST["searchdata"];				
+		if ($_POST["model"] === "product.template"){
+                    array_push($search, array("uom_id", "ilike", 1));
+		}                
+                elseif (isset($_POST["partnerid"])){
+                    array_push($search, array("partner_id", "ilike", (int) $_POST["partnerid"]));
+                }
+		$count = $odoo->call($_POST["model"],'search_count',array($search));
+		$data = $odoo->call($_POST["model"],"search_read",array($search),array("offset"=>$offset,"limit"=>$limit,"order"=>$order));
+                foreach($data["result"] as $key => $item){ //get local user info                
+                    if (count($item["partner_id"]) > 0){
+                        $data["result"][$key]["user_data"] = $odoo->getLocalUser($item["partner_id"][0]);
+                    }
+                    else if ($_POST["model"] === "res.partner"){
+                        $data["result"][$key]["user_data"] = $odoo->getLocalUser($item["id"]);
+                    }
+                }
+		$odoo->print_json(true,array("count"=>$count["result"],"data"=>$data["result"]));
+	}        
         //GET SINGLE/SPECIFIC ID
 	else if (isset($_POST["records"]) && isset($_POST["single"]) && isset($_POST["model"]) && isset($_POST["sessionid"])){
 		$odoo->setSession($_POST["sessionid"]);		
